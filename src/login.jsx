@@ -25,6 +25,7 @@ export default function Login() {
     if (otp === "123456") {
       alert("Login successful!");
       localStorage.setItem("authenticated", "true");
+      localStorage.setItem("user", JSON.stringify({ phone, votes: {} }));
       window.location.href = "/home";
     } else {
       alert("Wrong OTP! Use 123456");
