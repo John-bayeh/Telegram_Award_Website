@@ -10,6 +10,22 @@ import aiRoutes from "./routes/ai.js";
 import voteRoutes from "./routes/votes.js";
 
 dotenv.config();
+
+// Production check: Validate critical environment variables
+if (!process.env.MONGO_URI) {
+  console.error("❌ CRITICAL ERROR: MONGO_URI is not defined in your environment variables!");
+  process.exit(1);
+}
+if (!process.env.JWT_SECRET) {
+  console.error("❌ CRITICAL ERROR: JWT_SECRET is not defined in your environment variables!");
+  process.exit(1);
+}
+if (process.env.MOCK_OTP !== "true") {
+  if (!process.env.BREVO_API_KEY || !process.env.BREVO_EMAIL_SENDER_EMAIL) {
+    console.warn("⚠️ WARNING: BREVO_API_KEY or BREVO_EMAIL_SENDER_EMAIL is not set. Real OTP emails will fail to send!");
+  }
+}
+
 const app = express();
 
 // Dynamic CORS — reads from ALLOWED_ORIGINS env var (comma-separated)

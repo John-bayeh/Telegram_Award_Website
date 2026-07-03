@@ -9,10 +9,26 @@ export default function ChatBot() {
   const [input, setInput]     = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
+  const chatbotRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (chatbotRef.current && !chatbotRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    if (open) {
+      // Small timeout to prevent the opening click from triggering the close handler instantly
+      setTimeout(() => {
+        window.addEventListener("click", handleOutsideClick);
+      }, 0);
+    }
+    return () => window.removeEventListener("click", handleOutsideClick);
+  }, [open]);
 
   const send = async () => {
     const text = input.trim();
@@ -39,7 +55,7 @@ export default function ChatBot() {
   };
 
   return (
-    <>
+    <div ref={chatbotRef}>
       {/* Floating button */}
       <button
         onClick={() => setOpen(o => !o)}
@@ -114,6 +130,6 @@ export default function ChatBot() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
