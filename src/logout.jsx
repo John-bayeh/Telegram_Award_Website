@@ -5,10 +5,10 @@ export default function Logout() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Clear user from localStorage
+    // Clear all auth-related keys so ProtectedRoute treats the user as logged out
     localStorage.removeItem("user");
-
-    // Optional: clear redirect info
+    localStorage.removeItem("authenticated");
+    localStorage.removeItem("token");
     localStorage.removeItem("redirectAfterLogin");
 
     // Redirect to login page

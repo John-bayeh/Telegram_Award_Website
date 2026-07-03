@@ -18,44 +18,63 @@ import b from './assets/b.jpg';
 
 export default function Category() {
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isAdmin = user?.isAdmin === true;
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("authenticated");
+    localStorage.removeItem("token");
+    localStorage.removeItem("redirectAfterLogin");
+    navigate("/login", { replace: true });
+  };
 
   const initialCategories = [
-    { name: "Best_tech_group", desc: "This Award is for Tech_ones", img: tech, route: "/education" },
-    { name: "Best_Sport", desc: "This Award is for sports groups", img: sport, route: "/sports" },
-    { name: "Best_Entertainment_Channels", desc: "For groups helping communities", img: entartain, route: "/entertainment" },
-    { name: "Best_meme_group", desc: "This Award is for Memers", img: meme, route: "/best_meme" },
-    { name: "Best Bot", desc: "This bot is for best bots which help users in polls, reminders and even games", img: bot, route: "/bot" },
-    { name: "Best News Channel", desc: "This award is for top news channels sharing updates fast and accurately", img: news, route: "/news" },
-    { name: "Best Lifestyle", desc: "For lifestyle and fashion-focused Telegram channels", img: lifestyle, route: "/lifestyle" },
+    { name: "Best Tech Group", desc: "This Award is for Tech groups", img: tech, route: "/category/tech" },
+    { name: "Best Sport", desc: "This Award is for sports groups", img: sport, route: "/category/sport" },
+    { name: "Best Entertainment", desc: "For entertainment groups", img: entartain, route: "/category/entertainment" },
+    { name: "Best Meme Group", desc: "This Award is for Memers", img: meme, route: "/category/meme" },
+    { name: "Best Bot", desc: "Award for bots helping users with polls, reminders and games", img: bot, route: "/category/bot" },
+    { name: "Best News Channel", desc: "This award is for top news channels sharing updates fast and accurately", img: news, route: "/category/news" },
+    { name: "Best Lifestyle", desc: "For lifestyle and fashion-focused Telegram channels", img: lifestyle, route: "/category/lifestyle" },
   ];
 
   const [categories,setCategories] = useState(initialCategories);
 
-  const targetDate = new Date("2025-12-25T00:00:00");
+  const VOTING_END = new Date("2026-08-03T00:00:00");
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const now = new Date();
-      const diff = targetDate - now;
-
+    const tick = () => {
+      const diff = VOTING_END - new Date();
       if (diff <= 0) {
-        clearInterval(interval);
         setTimeLeft({ days: 0, hours: 0, mins: 0, secs: 0 });
       } else {
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        const mins = Math.floor((diff / (1000 * 60)) % 60);
-        const secs = Math.floor((diff / 1000) % 60);
-        setTimeLeft({ days, hours, mins, secs });
+        setTimeLeft({
+          days:  Math.floor(diff / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          mins:  Math.floor((diff / (1000 * 60)) % 60),
+          secs:  Math.floor((diff / 1000) % 60),
+        });
       }
-    }, 1000);
-
+    };
+    tick(); // run immediately so values show at once
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [targetDate]);
+  }, []);
 
   return (
-    <div className="bg-black w-full min-h-screen flex flex-col text-gray-200">
+    <div
+      className="w-full min-h-screen flex flex-col text-gray-200"
+      style={{
+        background: `
+          radial-gradient(ellipse at 20% 0%, rgba(42,171,238,0.18) 0%, transparent 55%),
+          radial-gradient(ellipse at 80% 10%, rgba(34,158,217,0.12) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 100%, rgba(42,171,238,0.07) 0%, transparent 60%),
+          #0a0b0f
+        `,
+      }}
+    >
 
       {/* 🔥 Top Background Banner */}
       <div
@@ -64,36 +83,37 @@ export default function Category() {
       >
         <div className="absolute inset-0 bg-black/50 "></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-white">
-          <h1 className="text-5xl font-extrabold drop-shadow-lg">Telegram Award 2025</h1>
+          <h1 className="text-5xl font-extrabold drop-shadow-lg">Telegram Award</h1>
           <p className="text-xl text-gray-300 mt-3">Discover | Vote | Celebrate</p>
         </div>
       </div>
 
       {/* 🌟 Navbar */}
-      <section className="flex justify-between items-center bg-black/40 backdrop-blur-lg px-8 py-4 border-b border-gray-700 shadow-md sticky top-0 z-50">
+      <section
+        className="flex justify-between items-center backdrop-blur-lg px-8 py-4 shadow-md sticky top-0 z-50"
+        style={{
+          background: "linear-gradient(135deg, rgba(42,171,238,0.15), rgba(34,158,217,0.08))",
+          borderBottom: "1px solid rgba(42,171,238,0.25)",
+        }}
+      >
         <div className="flex items-center gap-3">
           <img className="w-10 h-10 rounded-full" src={trophy} alt="Trophy" />
-          <span className="font-bold text-lg">Telegram Award</span>
+          <span className="font-bold text-lg" style={{ color: "#2AABEE" }}>Telegram Award</span>
         </div>
 
-        <div className="flex items-center gap-8">
-          <nav>
-            <ol className="flex gap-8 text-white font-medium">
-              <li className="hover:text-yellow-400 transition"><Link to="/home">Home</Link></li>
-              <li className="hover:text-yellow-400 transition"><Link to="/category">Category</Link></li>
-              <li className="hover:text-yellow-400 transition"><Link to="/upgrade">Upgrade</Link></li>
-              <li className="hover:text-yellow-400 transition"><Link to="/logout">Logout</Link></li>
-
-            </ol>
-          </nav>
-
-          <button
-            onClick={() => navigate("/login")}
-            className="bg-yellow-500 text-black px-5 py-2 rounded-xl font-semibold shadow hover:bg-yellow-400 transition"
-          >
-            Login To Vote
-          </button>
-        </div>
+        <nav>
+          <ol className="flex gap-8 text-white font-medium">
+            <li className="hover:text-[#2AABEE] transition"><Link to="/home">Home</Link></li>
+            <li className="hover:text-[#2AABEE] transition"><Link to="/category">Category</Link></li>
+            <li className="hover:text-[#2AABEE] transition"><Link to="/upgrade">Upgrade</Link></li>
+            {isAdmin && (
+              <li className="hover:text-[#2AABEE] transition">
+                <Link to="/admin" style={{ color: "#2AABEE", fontWeight: 700 }}>Admin</Link>
+              </li>
+            )}
+            <li className="hover:text-[#2AABEE] transition cursor-pointer" onClick={handleLogout}>Logout</li>
+          </ol>
+        </nav>
       </section>
 
       {/* 🎬 Hero Section (Video) */}
@@ -103,9 +123,14 @@ export default function Category() {
           src={Home_award}
           autoPlay loop muted playsInline
         />
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-black/50"></div>
         <div className="absolute inset-0 flex flex-col justify-center items-center text-white">
-          <h1 className="text-4xl md:text-5xl font-bold drop-shadow-xl">Vote For Your Favorites</h1>
+          <h1
+            className="text-4xl md:text-5xl font-bold drop-shadow-xl"
+            style={{ background: "linear-gradient(135deg, #2AABEE, #229ED9)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+          >
+            Vote For Your Favorites
+          </h1>
           <p className="text-lg md:text-xl text-gray-300 mt-3">Celebrate top Telegram creators & communities</p>
         </div>
       </section>
@@ -118,9 +143,9 @@ export default function Category() {
           {["Days", "Hours", "Mins", "Secs"].map((label, i) => {
             const value = [timeLeft.days, timeLeft.hours, timeLeft.mins, timeLeft.secs][i];
             return (
-              <div key={i} className="bg-gray-800/70 px-6 py-4 rounded-xl shadow-lg border border-gray-600">
-                <div className="text-4xl font-bold">{value}</div>
-                <div className="text-yellow-400 text-sm">{label}</div>
+              <div key={i} style={{ borderColor: "rgba(42,171,238,0.15)" }} className="bg-gray-800/50 px-6 py-4 rounded-xl shadow-lg border">
+                <div className="text-4xl font-bold" style={{ color: "#2AABEE" }}>{value}</div>
+                <div className="text-gray-400 text-sm">{label}</div>
               </div>
             );
           })}
@@ -132,26 +157,40 @@ export default function Category() {
         <h2 className="text-2xl font-bold mb-4 text-center">Important Dates</h2>
         <div className=" flex flex-col gap-6 text-left">
           <div className="">
-            <div className="text-yellow-400 font-semibold text-lg">Voting Starts</div>
-            <div className="text-xl font-bold mt-1">October 25, 2025</div>
+            <div className="text-[#2AABEE] font-semibold text-lg">Voting Starts</div>
+            <div className="text-xl font-bold mt-1">July 3, 2026</div>
           </div>
           <div>
-            <div className="text-yellow-400 font-semibold text-lg">Voting Ends</div>
-            <div className="text-xl font-bold mt-1">November 25, 2025</div>
+            <div className="text-[#2AABEE] font-semibold text-lg">Voting Ends</div>
+            <div className="text-xl font-bold mt-1">August 3, 2026</div>
           </div>
         </div>
       </section>
 
       {/* 🗂 Categories */}
       <section className="p-6 w-full max-w-6xl mx-auto mt-14">
-        <h2 className="text-3xl font-bold mb-10 text-center ">Award Categories</h2>
+        <h2
+          className="text-3xl font-bold mb-10 text-center"
+          style={{ background: "linear-gradient(135deg, #2AABEE, #229ED9)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+        >
+          Award Categories
+        </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
           {categories.map((category, i) => (
             <div
               key={i}
               onClick={() => navigate(category.route)}
-              className="cursor-pointer bg-gray-900/60 border border-gray-700 p-5 rounded-2xl shadow-xl hover:shadow-yellow-500/20 hover:scale-105 transition-all"
+              className="cursor-pointer bg-gray-900/60 border border-gray-700 p-5 rounded-2xl shadow-xl hover:scale-105 transition-all"
+              style={{ transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s" }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = "rgba(42,171,238,0.5)";
+                e.currentTarget.style.boxShadow = "0 0 24px rgba(42,171,238,0.15)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = "";
+                e.currentTarget.style.boxShadow = "";
+              }}
             >
               <img
                 className="w-full h-44 object-cover rounded-lg mb-4 shadow-md"
@@ -166,7 +205,7 @@ export default function Category() {
       </section>
 
       <footer className="mt-16 text-gray-500 pb-6 text-center">
-        © 2025 Telegram Awards — All Rights Reserved
+        © 2025 Telegram Award — All Rights Reserved
       </footer>
 
     </div>
