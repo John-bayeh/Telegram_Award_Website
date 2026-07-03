@@ -1,181 +1,210 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-
-// Import all images for different categories
-import stem_murad from "./assets/stem_with_murad.jpg";
-import kesem from "./assets/kesem.jpg";
-import kelem from "./assets/kelem.jpg";
-import Top from "./assets/Top_students.jpg";
-import python from "./assets/python.jpg";
-import arsenal from "./assets/arsenal.jpg";
-import liverpool from "./assets/liverpool.jpg";
-import united from "./assets/united.jpg";
-import ftt from './assets/433.jpg';
-import skysport from './assets/skysport.jpg';
-import k from "./assets/k.jpg";
-import sg from "./assets/sg.jpg";
-import khan from './assets/khan2.jpg';
-import arab from "./assets/arab.jpg";
-import memeImg from './assets/meme.jpg';
-import coding_humor from './assets/dark_humor.jpg';
-import dark_humor from './assets/coding_humor.jpg';
-import chatgpt from "./assets/chatgpt.jpg";
-import ifttt from "./assets/ifttt.jpg";
-import Spotybot from "./assets/spotify.jpg";
-import Trivia from "./assets/Trivia.jpg";
-import img1 from "./assets/tikvah.jpg";
-import img2 from "./assets/technews.jpg";
-import img3 from "./assets/tel.jpg";
-import animation from "./assets/animation_film.jpg";
-import music from "./assets/best_music.jpg";
-import fourfourthree from "./assets/animation_film.jpg";
-const allCategories = {
-  tech: {
-    id: "tech",
-    name: "Best Tech Group",
-    desc: "Award for Tech groups",
-    competitors: [
-      { id: 1, name: "STEM with Murad", username: "@STEMwithMurad", votes: 10, img: stem_murad },
-      { id: 2, name: "KESEM Academy", username: "@KesemAcademy", votes: 7, img: kesem },
-      { id: 3, name: "Keleme", username: "@Keleme", votes: 5, img: kelem },
-      { id: 4, name: "Top Students", username: "@TopStudents", votes: 12, img: Top },
-      { id: 5, name: "@CodeProgrammer", username: "@CodeProgrammer", votes: 1, img: python },
-    ]
-  },
-  sport: {
-    id: "sport",
-    name: "Best Sport",
-    desc: "Award for Sports groups",
-    competitors: [
-      { id: 1, name: "Zena Manchester United", username: "@zena_manchester_united", votes: 0, img: united },
-      { id: 2, name: "Zena Arsenal", username: "@zena_arsenal", votes: 0, img: arsenal },
-      { id: 3, name: "Zena Liverpool", username: "@zena_liverpool", votes: 0, img: liverpool },
-      { id: 4, name: "4-3-3 Sport Ethiopia™", username: "", votes: 0, img: ftt },
-      { id: 5, name: "Skysport ET™", username: "", votes: 0, img: skysport },
-    ]
-  },
-  lifestyle: {
-    id: "lifestyle",
-    name: "Best Lifestyle",
-    desc: "Award for Lifestyle channels",
-    competitors: [
-      { id: 1, name: "Третьякова Елена", username: "@tretyakovaele", votes: 0, img: k },
-      { id: 2, name: "SG Travel+Lifestyle Hacks", username: "@youtripsg", votes: 0, img: sg },
-      { id: 3, name: "Sahil Khan Lifestyle", username: "@sahilkhanstyle", votes: 0, img: khan },
-      { id: 4, name: "راز جوانی", username: "@lifestyle3", votes: 0, img: arab },
-    ]
-  },
-  meme: {
-    id: "meme",
-    name: "Best Meme Group",
-    desc: "Award for Meme groups",
-    competitors: [
-      { id: 1, name: "Coding Humor", username: "@funnyvideosandmemesxplodecomedy", votes: 10, img: memeImg },
-      { id: 2, name: "Memes", username: "@bestmemes", votes: 7, img: coding_humor },
-      { id: 3, name: "Dark Humor Hub", username: "@darkjokeshere", votes: 15, img: dark_humor },
-    ]
-  },
-  bot: {
-    id: "bot",
-    name: "Best Bot",
-    desc: "Award for Bots",
-    competitors: [
-      { id: 1, name: "@GPT4Telegrambot", votes: 0, img: chatgpt },
-      { id: 2, name: "@IFTTT", votes: 0, img: ifttt },
-      { id: 3, name: "@Spotyy_bot", votes: 0, img: Spotybot },
-      { id: 4, name: "@TriviaBot", votes: 0, img: Trivia },
-    ]
-  },
-  news: {
-    id: "news",
-    name: "Best News Channel",
-    desc: "Award for News channels",
-    competitors: [
-      { id: 1, name: "Telemetrio", username: "@telemetrio_news", votes: 0, img: img3 },
-      { id: 2, name: "TIKVAH-ETHIOPIA", username: "@tikvahethiopia", votes: 0, img: img1 },
-      { id: 3, name: "Discover Tech News", username: "@perplexity", votes: 0, img: img2 },
-    ]
-  },
-  entertainment: {
-    id: "entertainment",
-    name: "Best Entertainment",
-    desc: "Award for Entertainment groups",
-    competitors: [
-      { id: 1, name: "Entertainment One", username: "@ent1", votes: 0, img: animation },
-      { id: 2, name: "Entertainment Two", username: "@ent2", votes: 0, img: music},
-      { id: 2, name: "Entertainment Two", username: "@ent2", votes: 0, img: fourfourthree},
-    ]
-  },
-};
+import { API_URL } from "./api";
+import imageMap from "./imageMap";
+import Toast from "./components/Toast";
+import VotePredictor from "./components/VotePredictor";
 
 export default function CategoryDetail() {
-  const { id } = useParams();
+  const { id: slug } = useParams();
   const [category, setCategory] = useState(null);
-  const [votedId, setVotedId] = useState(null);
+  const [status, setStatus]     = useState("loading"); // loading | ready | notfound | error
+  const [votedId, setVotedId]   = useState(null);
+  const [voting, setVoting]     = useState(false);
+  const [toast, setToast]       = useState(null);
+  const [showPredictor, setShowPredictor] = useState(false);
+
   const user = JSON.parse(localStorage.getItem("user"));
 
+  const closeToast = useCallback(() => setToast(null), []);
+
+  // Fetch category + user's existing vote in parallel
   useEffect(() => {
-    const cat = allCategories[id];
-    if (!cat) return;
-    // Deep copy to avoid mutation of original data
-    const catCopy = { ...cat, competitors: cat.competitors.map(c => ({ ...c })) };
-    setCategory(catCopy);
+    let active = true;
+    setStatus("loading");
 
-    // Load previous vote from localStorage
-    if (user?.votes && user.votes[id]) {
-      setVotedId(user.votes[id]);
+    const token    = localStorage.getItem("token");
+    const userData = JSON.parse(localStorage.getItem("user") || "{}");
+
+    const catFetch = fetch(`${API_URL}/api/categories/${slug}`)
+      .then(r => { if (r.status === 404) return null; if (!r.ok) throw new Error(); return r.json(); });
+
+    const votesFetch = token
+      ? fetch(`${API_URL}/api/votes/mine`, { headers: { Authorization: `Bearer ${token}` } })
+          .then(r => r.ok ? r.json() : {}).catch(() => ({}))
+      : Promise.resolve({});
+
+    Promise.all([catFetch, votesFetch])
+      .then(([catData, votesMap]) => {
+        if (!active) return;
+        if (!catData) { setStatus("notfound"); return; }
+        setCategory(catData);
+
+        const backendVote  = votesMap?.[slug] ? String(votesMap[slug]) : null;
+        const localVote    = userData?.votes?.[slug] ? String(userData.votes[slug]) : null;
+        const resolvedVote = backendVote || localVote || null;
+
+        if (resolvedVote) {
+          setVotedId(resolvedVote);
+          if (backendVote && backendVote !== localVote) {
+            const updated = { ...userData, votes: { ...(userData.votes || {}), [slug]: backendVote } };
+            localStorage.setItem("user", JSON.stringify(updated));
+          }
+        }
+
+        setStatus("ready");
+      })
+      .catch(() => active && setStatus("error"));
+
+    return () => { active = false; };
+  }, [slug]);
+
+  // Called after user confirms in the toast
+  const submitVote = async (competitorId) => {
+    setVoting(true);
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_URL}/api/categories/${slug}/vote`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ competitorId }),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setCategory((prev) => ({
+          ...prev,
+          competitors: prev.competitors.map((c) =>
+            c._id === competitorId ? { ...c, votes: data.votes } : c
+          ),
+        }));
+        setVotedId(competitorId);
+
+        const updatedUser = {
+          ...user,
+          votes: { ...(user.votes || {}), [slug]: competitorId },
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        const winner = category.competitors.find((c) => c._id === competitorId);
+        setToast({
+          type: "success",
+          message: `Your vote for "${winner?.name || "your pick"}" has been recorded!`,
+        });
+        setTimeout(() => setShowPredictor(true), 1800);
+      } else if (res.status === 409) {
+        setVotedId(competitorId);
+        setToast({ type: "info", message: "You already voted in this category." });
+      } else {
+        setToast({ type: "error", message: data.message || "Failed to submit vote. Try again." });
+      }
+    } catch (err) {
+      console.error(err);
+      setToast({ type: "error", message: "Network error. Check your connection and try again." });
+    } finally {
+      setVoting(false);
     }
-  }, [id, user]);
-
-  const handleVote = (competitorId) => {
-    if (!user) return alert("You must login before voting.");
-    if (votedId) return alert("You already voted in this category!");
-
-    const updatedCompetitors = category.competitors.map(c =>
-      c.id === competitorId ? { ...c, votes: c.votes + 1 } : c
-    );
-
-    setCategory({ ...category, competitors: updatedCompetitors });
-    setVotedId(competitorId);
-
-    const updatedUser = {
-      ...user,
-      votes: { ...user.votes, [id]: competitorId },
-    };
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-
-    alert(`You voted for: ${category.competitors.find(c => c.id === competitorId).name}`);
   };
 
-  if (!category) return <p className="text-white text-center mt-10">Category not found</p>;
+  // Show confirm toast before actually voting
+  const handleVote = (competitorId) => {
+    if (!user) {
+      setToast({ type: "info", message: "You must be logged in to vote." });
+      return;
+    }
+    if (votedId) {
+      setToast({
+        type: "info",
+        message: "You already voted in this category.",
+        sub: "Each category allows only one vote.",
+      });
+      return;
+    }
+    if (voting) return;
+
+    const pick = category.competitors.find((c) => c._id === competitorId);
+    setToast({
+      type: "confirm",
+      message: `Vote for "${pick?.name}"?`,
+      onConfirm: () => submitVote(competitorId),
+    });
+  };
+
+  if (status === "loading")
+    return <p className="text-white text-center mt-10">Loading…</p>;
+  if (status === "notfound")
+    return <p className="text-white text-center mt-10">Category not found</p>;
+  if (status === "error")
+    return <p className="text-white text-center mt-10">Couldn't load this category. Please refresh.</p>;
 
   return (
-    <div className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-4xl font-bold mb-6">{category.name}</h1>
-      <p className="text-gray-400 mb-6">{category.desc}</p>
+    <div
+      className="min-h-screen text-white p-6"
+      style={{
+        background: `
+          radial-gradient(ellipse at 20% 0%, rgba(42,171,238,0.18) 0%, transparent 55%),
+          radial-gradient(ellipse at 80% 10%, rgba(34,158,217,0.12) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 100%, rgba(42,171,238,0.07) 0%, transparent 60%),
+          #0a0b0f
+        `,
+      }}
+    >
+      <Toast toast={toast} onClose={closeToast} />
+      {showPredictor && (
+        <VotePredictor slug={slug} votedId={votedId} onClose={() => setShowPredictor(false)} />
+      )}
+
+      <h1
+        className="text-4xl font-bold mb-2"
+        style={{ background: "linear-gradient(135deg, #2AABEE, #229ED9)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+      >
+        {category.name}
+      </h1>
+      <p className="text-gray-400 mb-8">{category.desc}</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {category.competitors.map(c => (
+        {category.competitors.map((c) => (
           <div
-            key={c.id}
-            className="bg-gray-900/60 border border-gray-700 p-5 rounded-2xl shadow-xl hover:shadow-yellow-500/20 hover:scale-105 transition-all flex flex-col items-center"
+            key={c._id}
+            className="bg-gray-900/60 border border-gray-700 p-5 rounded-2xl shadow-xl hover:scale-105 transition-all flex flex-col items-center"
+            style={{ transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s" }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = "rgba(42,171,238,0.5)";
+              e.currentTarget.style.boxShadow = "0 0 24px rgba(42,171,238,0.15)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = "";
+              e.currentTarget.style.boxShadow = "";
+            }}
           >
-            <img src={c.img} alt={c.name} className="w-full h-44 object-cover rounded-lg mb-4" />
-            <h3 className="text-xl font-bold">{c.name}</h3>
+            <img
+              src={imageMap[c.imageKey]}
+              alt={c.name}
+              className="w-full h-44 object-cover rounded-lg mb-4"
+            />
+            <h3 className="text-xl font-bold text-center">{c.name}</h3>
             {c.username && <p className="text-gray-400 mt-1">{c.username}</p>}
             <div className="text-green-400 mt-2">Votes: {c.votes}</div>
             <button
-              onClick={() => handleVote(c.id)}
-              disabled={!!votedId}
-              className={`mt-3 px-4 py-2 rounded ${
+              onClick={() => handleVote(c._id)}
+              disabled={voting}
+              style={!votedId ? { background: "linear-gradient(135deg, #2AABEE, #229ED9)" } : {}}
+              className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold transition active:scale-95 ${
                 votedId
-                  ? c.id === votedId
-                    ? "bg-gray-600 cursor-not-allowed"
-                    : "bg-gray-700 opacity-50 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-700"
+                  ? String(c._id) === String(votedId)
+                    ? "bg-emerald-700/40 text-emerald-300 border border-emerald-600/40 cursor-default"
+                    : "bg-white/5 text-gray-500 border border-white/10 hover:bg-white/10 cursor-pointer"
+                  : "text-white shadow-lg"
               }`}
             >
-              {c.id === votedId ? "Voted ✅" : "Vote"}
+              {String(c._id) === String(votedId)
+                ? "✅ Your vote"
+                : votedId
+                  ? "Already voted"
+                  : voting ? "Voting…" : "Vote"}
             </button>
           </div>
         ))}
