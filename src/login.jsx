@@ -1,5 +1,5 @@
 // src/login.jsx — Email OTP authentication via Brevo
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "./api";
 import awardLogo from "./assets/award.png";
@@ -10,16 +10,21 @@ export default function Login() {
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState("");
+  const [slow, setSlow]       = useState(false); // true if server is taking >4s
+  const slowTimer = useRef(null);
   const navigate = useNavigate();
 
   const sendOtp = async () => {
     setError("");
+    setSlow(false);
     const cleaned = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned)) {
       setError("Please enter a valid email address.");
       return;
     }
     setLoading(true);
+    // Show wake-up notice if server takes more than 4 seconds (Render cold start)
+    slowTimer.current = setTimeout(() => setSlow(true), 4000);
     try {
       const res = await fetch(`${API_URL}/api/auth/send-otp`, {
         method: "POST",
@@ -30,8 +35,10 @@ export default function Login() {
       if (!res.ok) { setError(data.message || "Failed to send OTP. Please try again."); return; }
       setOtpSent(true);
     } catch {
-      setError("Network error. Please check your connection and try again.");
+      setError("The server is starting up — please wait a moment and try again.");
     } finally {
+      clearTimeout(slowTimer.current);
+      setSlow(false);
       setLoading(false);
     }
   };
@@ -164,6 +171,13 @@ export default function Login() {
             {error && (
               <div className="bg-red-500/10 border border-red-500/40 text-red-300 text-sm px-4 py-3 rounded-xl mb-5 flex items-start gap-2">
                 <span className="mt-0.5">⚠️</span><span>{error}</span>
+              </div>
+            )}
+
+            {slow && !error && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 text-sm px-4 py-3 rounded-xl mb-5 flex items-start gap-2">
+                <span className="mt-0.5">⏳</span>
+                <span>Server is waking up — this takes ~15 seconds on first load. Please wait…</span>
               </div>
             )}
 
