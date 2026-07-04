@@ -5,6 +5,63 @@ import imageMap from "./imageMap";
 import Toast from "./components/Toast";
 import VotePredictor from "./components/VotePredictor";
 
+// Helper component for individual competitor cards to isolate image loading hooks
+function CompetitorCard({ c, votedId, voting, handleVote }) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+
+  return (
+    <div
+      className="bg-gray-900/60 border border-gray-700 p-5 rounded-2xl shadow-xl hover:scale-105 transition-all flex flex-col items-center"
+      style={{ transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s" }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = "rgba(42,171,238,0.5)";
+        e.currentTarget.style.boxShadow = "0 0 24px rgba(42,171,238,0.15)";
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = "";
+        e.currentTarget.style.boxShadow = "";
+      }}
+    >
+      <div className="relative w-full h-44 mb-4 rounded-lg overflow-hidden bg-white/5">
+        {/* Image Placeholder Skeleton */}
+        {!imgLoaded && (
+          <div className="absolute inset-0 bg-white/5 animate-pulse" />
+        )}
+        <img
+          src={imageMap[c.imageKey]}
+          alt={c.name}
+          onLoad={() => setImgLoaded(true)}
+          className={`w-full h-full object-cover transition-opacity duration-500 ease-in-out ${
+            imgLoaded ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </div>
+
+      <h3 className="text-xl font-bold text-center">{c.name}</h3>
+      {c.username && <p className="text-gray-400 mt-1">{c.username}</p>}
+      <div className="text-green-400 mt-2">Votes: {c.votes}</div>
+      <button
+        onClick={() => handleVote(c._id)}
+        disabled={voting}
+        style={!votedId ? { background: "linear-gradient(135deg, #2AABEE, #229ED9)" } : {}}
+        className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold transition active:scale-95 ${
+          votedId
+            ? String(c._id) === String(votedId)
+              ? "bg-emerald-700/40 text-emerald-300 border border-emerald-600/40 cursor-default"
+              : "bg-white/5 text-gray-500 border border-white/10 hover:bg-white/10 cursor-pointer"
+            : "text-white shadow-lg"
+        }`}
+      >
+        {String(c._id) === String(votedId)
+          ? "✅ Your vote"
+          : votedId
+            ? "Already voted"
+            : voting ? "Voting…" : "Vote"}
+      </button>
+    </div>
+  );
+}
+
 export default function CategoryDetail() {
   const { id: slug } = useParams();
   const [category, setCategory] = useState(null);
@@ -133,8 +190,44 @@ export default function CategoryDetail() {
     });
   };
 
-  if (status === "loading")
-    return <p className="text-white text-center mt-10">Loading…</p>;
+  // Render premium skeleton loading state
+  if (status === "loading") {
+    return (
+      <div
+        className="min-h-screen text-white p-6"
+        style={{
+          background: `
+            radial-gradient(ellipse at 20% 0%, rgba(42,171,238,0.18) 0%, transparent 55%),
+            radial-gradient(ellipse at 80% 10%, rgba(34,158,217,0.12) 0%, transparent 50%),
+            #0a0b0f
+          `,
+        }}
+      >
+        {/* Title skeleton */}
+        <div className="animate-pulse mb-8 max-w-sm">
+          <div className="h-10 bg-white/10 rounded-xl w-3/4 mb-3"></div>
+          <div className="h-4 bg-white/5 rounded-lg w-full"></div>
+        </div>
+
+        {/* Competitor cards skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((n) => (
+            <div
+              key={n}
+              className="bg-gray-900/40 border border-white/5 p-5 rounded-2xl animate-pulse flex flex-col items-center"
+            >
+              <div className="w-full h-44 bg-white/5 rounded-lg mb-4"></div>
+              <div className="h-6 bg-white/10 rounded-lg w-2/3 mb-2"></div>
+              <div className="h-4 bg-white/5 rounded-lg w-1/2 mb-4"></div>
+              <div className="h-4 bg-white/10 rounded-lg w-1/3 mb-4"></div>
+              <div className="h-10 bg-white/10 rounded-xl w-24"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (status === "notfound")
     return <p className="text-white text-center mt-10">Category not found</p>;
   if (status === "error")
@@ -142,7 +235,7 @@ export default function CategoryDetail() {
 
   return (
     <div
-      className="min-h-screen text-white p-6"
+      className="min-h-screen text-white p-6 animate-fade-in-up"
       style={{
         background: `
           radial-gradient(ellipse at 20% 0%, rgba(42,171,238,0.18) 0%, transparent 55%),
@@ -167,46 +260,13 @@ export default function CategoryDetail() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {category.competitors.map((c) => (
-          <div
+          <CompetitorCard
             key={c._id}
-            className="bg-gray-900/60 border border-gray-700 p-5 rounded-2xl shadow-xl hover:scale-105 transition-all flex flex-col items-center"
-            style={{ transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s" }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = "rgba(42,171,238,0.5)";
-              e.currentTarget.style.boxShadow = "0 0 24px rgba(42,171,238,0.15)";
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = "";
-              e.currentTarget.style.boxShadow = "";
-            }}
-          >
-            <img
-              src={imageMap[c.imageKey]}
-              alt={c.name}
-              className="w-full h-44 object-cover rounded-lg mb-4"
-            />
-            <h3 className="text-xl font-bold text-center">{c.name}</h3>
-            {c.username && <p className="text-gray-400 mt-1">{c.username}</p>}
-            <div className="text-green-400 mt-2">Votes: {c.votes}</div>
-            <button
-              onClick={() => handleVote(c._id)}
-              disabled={voting}
-              style={!votedId ? { background: "linear-gradient(135deg, #2AABEE, #229ED9)" } : {}}
-              className={`mt-3 px-4 py-2 rounded-lg text-sm font-semibold transition active:scale-95 ${
-                votedId
-                  ? String(c._id) === String(votedId)
-                    ? "bg-emerald-700/40 text-emerald-300 border border-emerald-600/40 cursor-default"
-                    : "bg-white/5 text-gray-500 border border-white/10 hover:bg-white/10 cursor-pointer"
-                  : "text-white shadow-lg"
-              }`}
-            >
-              {String(c._id) === String(votedId)
-                ? "✅ Your vote"
-                : votedId
-                  ? "Already voted"
-                  : voting ? "Voting…" : "Vote"}
-            </button>
-          </div>
+            c={c}
+            votedId={votedId}
+            voting={voting}
+            handleVote={handleVote}
+          />
         ))}
       </div>
     </div>

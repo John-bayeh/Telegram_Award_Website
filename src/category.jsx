@@ -92,40 +92,43 @@ export default function Category() {
         </div>
       </nav>
 
-      {/* Header */}
-      <div className="text-center mb-10 mt-10 px-4">
-        <h1
-          className="text-4xl font-bold mb-2"
-          style={{ background: "linear-gradient(135deg, #2AABEE, #229ED9)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
-        >
-          Award Categories
-        </h1>
-        <p className="text-gray-400">Explore the categories that honor creative excellence on Telegram.</p>
-      </div>
-
-      {/* Categories Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-6 pb-16 max-w-6xl mx-auto">
-        {categories.map((cat) => (
-          <div
-            key={cat.name}
-            onClick={() => handleCategoryClick(cat.route)}
-            className="cursor-pointer bg-gray-900/60 border border-gray-700 p-5 rounded-2xl shadow-xl hover:scale-105 transition-all"
-            style={{ transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s" }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = "rgba(42,171,238,0.5)";
-              e.currentTarget.style.boxShadow = "0 0 24px rgba(42,171,238,0.15)";
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = "";
-              e.currentTarget.style.boxShadow = "";
-            }}
+      {/* Main Content with Transition */}
+      <div className="animate-fade-in-up">
+        {/* Header */}
+        <div className="text-center mb-10 mt-10 px-4">
+          <h1
+            className="text-4xl font-bold mb-2"
+            style={{ background: "linear-gradient(135deg, #2AABEE, #229ED9)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
           >
-            <img src={cat.img} alt={cat.name} className="w-full h-44 object-cover rounded-lg mb-4" />
-            <div className="text-xl font-bold">{cat.name}</div>
-            <p className="text-gray-400 mt-1 text-sm">{cat.desc}</p>
-          </div>
-        ))}
-      </section>
+            Award Categories
+          </h1>
+          <p className="text-gray-400">Explore the categories that honor creative excellence on Telegram.</p>
+        </div>
+
+        {/* Categories Grid */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-6 pb-16 max-w-6xl mx-auto">
+          {categories.map((cat) => (
+            <div
+              key={cat.name}
+              onClick={() => handleCategoryClick(cat.route)}
+              className="cursor-pointer bg-gray-900/60 border border-gray-700 p-5 rounded-2xl shadow-xl hover:scale-105 transition-all"
+              style={{ transition: "transform 0.2s, box-shadow 0.2s, border-color 0.2s" }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = "rgba(42,171,238,0.5)";
+                e.currentTarget.style.boxShadow = "0 0 24px rgba(42,171,238,0.15)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = "";
+                e.currentTarget.style.boxShadow = "";
+              }}
+            >
+              <img src={cat.img} alt={cat.name} className="w-full h-44 object-cover rounded-lg mb-4" />
+              <div className="text-xl font-bold">{cat.name}</div>
+              <p className="text-gray-400 mt-1 text-sm">{cat.desc}</p>
+            </div>
+          ))}
+        </section>
+      </div>
     </div>
   );
 }
