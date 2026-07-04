@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./Home.jsx";
 import Category from "./category.jsx";
@@ -19,10 +19,26 @@ import Entertain from "./entertainment.jsx";
 import News from "./news.jsx";
 import Lifestyle from "./lifestyle.jsx";
 
-export default function App() {
-  const isLoggedIn =
+function checkAuth() {
+  return (
     localStorage.getItem("authenticated") === "true" &&
-    !!localStorage.getItem("token");
+    !!localStorage.getItem("token")
+  );
+}
+
+export default function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(checkAuth);
+
+  useEffect(() => {
+    const sync = () => setIsLoggedIn(checkAuth());
+    window.addEventListener("storage", sync);
+    // Also re-check on focus (same-tab login doesn't fire storage event)
+    window.addEventListener("focus", sync);
+    return () => {
+      window.removeEventListener("storage", sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
 
   return (
     <Router>
