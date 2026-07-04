@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: telegram-award-api
+    runtime: node
+    rootDir: Backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_EMAIL_SENDER_NAME
+        value: "Telegram Award"
+      - key: BREVO_EMAIL_SENDER_EMAIL
+        sync: false
+      - key: MOCK_OTP
+        value: "false"
+      - key: AI_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false

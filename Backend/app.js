@@ -9,6 +9,7 @@ import adminRoutes from "./routes/admin.js";
 import aiRoutes from "./routes/ai.js";
 import voteRoutes from "./routes/votes.js";
 import Category from "./models/Category.js";
+import User from "./models/User.js";
 
 dotenv.config();
 
@@ -130,12 +131,29 @@ async function autoSeed() {
   }
 }
 
+// Ensures the ADMIN_EMAIL user always has isAdmin:true in the DB.
+// If the user hasn't logged in yet, it creates the account so it's ready.
+async function ensureAdmin() {
+  const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+  if (!adminEmail) {
+    console.warn("⚠️  ADMIN_EMAIL not set — no admin will be auto-promoted.");
+    return;
+  }
+  const result = await User.findOneAndUpdate(
+    { email: adminEmail },
+    { $set: { isAdmin: true } },
+    { upsert: true, new: true }
+  );
+  console.log(`👑 Admin ensured: ${result.email} (isAdmin: ${result.isAdmin})`);
+}
+
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)
   .then(async () => {
     console.log("✅ MongoDB connected");
     await autoSeed();
+    await ensureAdmin();
   })
   .catch((err) => console.error("❌ MongoDB error:", err));
 
