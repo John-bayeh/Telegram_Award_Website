@@ -192,5 +192,6 @@ export default function Login() {
         </div>
         <p className="mt-6 text-center text-xs text-gray-600">🔒 Protected by Email verification · Your email is never shared.</p>
       </div>
+    </div>
   );
 }
