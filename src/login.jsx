@@ -68,6 +68,9 @@ export default function Login() {
         votes,
       }));
 
+      // Notify App.jsx to re-check auth state (shows ChatBot immediately)
+      window.dispatchEvent(new Event("authchange"));
+
       const redirectPath = localStorage.getItem("redirectAfterLogin") || "/home";
       localStorage.removeItem("redirectAfterLogin");
       navigate(redirectPath, { replace: true });

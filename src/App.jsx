@@ -32,11 +32,12 @@ export default function App() {
   useEffect(() => {
     const sync = () => setIsLoggedIn(checkAuth());
     window.addEventListener("storage", sync);
-    // Also re-check on focus (same-tab login doesn't fire storage event)
     window.addEventListener("focus", sync);
+    window.addEventListener("authchange", sync); // fired by login page
     return () => {
       window.removeEventListener("storage", sync);
       window.removeEventListener("focus", sync);
+      window.removeEventListener("authchange", sync);
     };
   }, []);
 
